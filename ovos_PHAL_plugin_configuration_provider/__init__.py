@@ -305,6 +305,7 @@ class ConfigurationProviderPlugin(PHALPlugin):
         """
         skill_id = message.data.get("skill_id")
         message.data = self.registered_settings[skill_id]
+        qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
         message.data["qml_file"] = qml_file
         self.bus.emit(message.response(message.data))
 
