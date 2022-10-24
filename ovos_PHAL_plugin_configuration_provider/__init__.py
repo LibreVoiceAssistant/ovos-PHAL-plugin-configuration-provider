@@ -278,7 +278,7 @@ class ConfigurationProviderPlugin(PHALPlugin):
         skill_id = message.data.get("skill_id")
         self.registered_settings[skill_id] = {
             "settings_meta": message.data.get("settings_meta"),
-            "skill_id";  skill_id
+            "skill_id":  skill_id
         }
     
     def handle_get_settings(self, message):
