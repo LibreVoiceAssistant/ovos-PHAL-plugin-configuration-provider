@@ -19,12 +19,13 @@ from mycroft_bus_client import Message
 from ovos_plugin_manager.phal import PHALPlugin
 from ovos_config.config import read_mycroft_config, update_mycroft_config
 from ovos_utils.log import LOG
-
+from ovos_utils.gui import GUIInterface
 
 class ConfigurationProviderPlugin(PHALPlugin):
     def __init__(self, bus=None, config=None):
         super().__init__(bus=bus, name="ovos-PHAL-plugin-configuration-provider", config=config)
         self.bus = bus
+        self.gui = GUIInterface(bus, self.name)
         self.settings_meta = {}
         self.build_settings_meta()
         
@@ -34,6 +35,22 @@ class ConfigurationProviderPlugin(PHALPlugin):
                     self.get_settings_meta)
         self.bus.on("ovos.phal.configuration.provider.set",
                     self.set_settings_in_config)
+        
+        self.bus.on("ovos.phal.configuration.provider.register.settings",
+                    self.handle_register_settings)
+        self.bus.on("ovos.phal.configuration.provider.get.settings", 
+                    self.handle_get_settings)
+        self.bus.on("ovos.phal.configuration.provider.display.settings", 
+                    self.display_settings_meta)
+        self.bus.on("ovos.phal.configuration.provider.get.settings.qml",
+                    self.handle_get_settings_ui)
+
+        # GUI specific
+        self.gui.register_handler("ovos.configuration.provider.update.setting",
+                                  self.handle_settings_meta_generator_config_change)
+        self.gui.register_handler("ovos.configuration.provider.settings.remove_page",
+                                  self.handle_remove_displayed_page)
+
 
     def build_settings_meta(self):
         readable_config = read_mycroft_config()
@@ -253,3 +270,47 @@ class ConfigurationProviderPlugin(PHALPlugin):
                             subkey, configuration, new_config[key][subkey])
 
                         update_mycroft_config(new_config[key][subkey])
+
+### Everything below deals with plugin configurations
+
+    def handle_register_settings(self, message=None):
+        settings_meta = message.data.get("settings_meta")
+        id = message.data.get("id")
+        # TODO: everything to do with registering settings
+    
+    def handle_get_settings(self, message=None):
+        settings_meta = {} # TODO: Get settings meta from somewhere
+        self.bus.emit(Message.reply(message, {"settings_meta": settings_meta}))
+        # TODO: everything to do with getting settings
+    
+    def display_settings_meta(self, message=None):
+        """
+        Display the settings meta data received from a request
+        """
+        settings_meta = message.data.get("settings_meta")
+        plugin_name = message.data.get("plugin_name")
+        self.gui["plugin_name"] = plugin_name
+        self.gui["settings_meta"] = settings_meta
+        self.gui["skill_id"] self.name
+        qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
+        self.gui.show_page(qml_file, override_idle=True)
+        
+    def handle_get_settings_ui(self, message=None):
+        """
+        Forward the settings metaata generator page to skills that want to use it
+        Skills that want to handle displaying the settings meta data generator page in their own GUI
+        """
+        qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
+        self.bus.emit(Message("ovos.phal.configuration.provider.settings.qml.file", {"qml_file": qml_file}))
+        
+    def handle_settings_meta_generator_config_change(self, message=None):
+        """
+        Handle the settings meta data generator page config change
+        This is the data page will pass back
+        """
+        new_config = message.data.get("configuration")
+        # TODO: what to do with the new config that was changed in the gui
+
+    def handle_remove_displayed_settings_meta(self, message=None):
+        qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
+        self.gui.remove_page(qml_file)
