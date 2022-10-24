@@ -26,6 +26,7 @@ class ConfigurationProviderPlugin(PHALPlugin):
         super().__init__(bus=bus, name="ovos-PHAL-plugin-configuration-provider", config=config)
         self.bus = bus
         self.gui = GUIInterface(bus, self.name)
+        self.registered_settings = {}
         self.settings_meta = {}
         self.build_settings_meta()
         
@@ -289,10 +290,6 @@ class ConfigurationProviderPlugin(PHALPlugin):
         """
         Display the settings meta data received from a request
         """
-        skill_displaying_id = message.data.get("skill_displaying_id")
-        # Skill display id is used by the back button management on the page, if display is coming from phal it should be phal name
-        # if its another skill that should be displaying this page then it needs to be set by that skill
-        # skills will also need to register a gui event handler for "(display_id).settings.remove_page"
         self.gui["skill_displaying_id"] = self.name
         self.gui["settings_meta"] = message.data.get("settings_meta")
         qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
@@ -302,8 +299,17 @@ class ConfigurationProviderPlugin(PHALPlugin):
         """
         Forward the settings metaata generator page to skills that want to use it
         Skills that want to handle displaying the settings meta data generator page in their own GUI
+        
+        Requires the skill using this to provide the gui with the following:
+            skill_displaying_id: The skill id of the skill that is displaying the settings meta data generator page
+            for back button page functionality, example: self.gui["skill_displaying_id"] = self.skill_id
         """
         skill_id = message.data.get("skill_id")
+
+        if not skill_id:
+            LOG.error("No skill id provided")
+            return
+        
         message.data = self.registered_settings[skill_id]
         qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
         message.data["qml_file"] = qml_file
@@ -314,7 +320,7 @@ class ConfigurationProviderPlugin(PHALPlugin):
         Handle the settings meta data generator page config change
         This is the data page will pass back
         """
-        self.bus.emit("ovos.phal.configuration.provider.update.settings", {"configuration": message.data.get("configuration")})
+        self.bus.emit("ovos.phal.configuration.provider.update.settings", {"configuration": message.data.get("configuration"), "skill_id": message.data.get("skill_id")})
 
     def handle_remove_displayed_page(self, message):
         qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
