@@ -314,7 +314,7 @@ class ConfigurationProviderPlugin(PHALPlugin):
         Handle the settings meta data generator page config change
         This is the data page will pass back
         """
-        self.bus.emit("ovos.phal.configuration.provider.update.settings", {"configuration": message.data.get("configuration")}
+        self.bus.emit("ovos.phal.configuration.provider.update.settings", {"configuration": message.data.get("configuration")})
 
     def handle_remove_displayed_settings_meta(self, message):
         qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
