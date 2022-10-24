@@ -25,11 +25,12 @@ Mycroft.Delegate {
     id: settingsMetaGeneratorView
     anchors.fill: parent
     property var skill_displaying_id: sessionData.skill_displaying_id
+    property var skill_id
     property var settingsMetaData: sessionData.settings_meta
     fillWidth: true
     
     function selectSettingUpdated(key, value) {
-        triggerGuiEvent("ovos.configuration.provider.update.setting", {"setting_key": key, "setting_value": value, "plugin_name": pluginName})
+        triggerGuiEvent("ovos.configuration.provider.update.setting", {"setting_key": key, "setting_value": value, "skill_id": skill_id})
     }
     
     function generate_settings_ui(mData, comp) {
@@ -80,6 +81,7 @@ Mycroft.Delegate {
         settingsMetaConfigView.update()
         if(settingsMetaData !== null){
             settingsMetaConfigView.model = settingsMetaData.sections
+            settingsMetaGeneratorView.skill_id = settingsMetaData.skill_id
             var skillname = settingsMetaData.skill_id.split(".")[0]
             configPageHeading.text = skillname + " Configuration"
         }
