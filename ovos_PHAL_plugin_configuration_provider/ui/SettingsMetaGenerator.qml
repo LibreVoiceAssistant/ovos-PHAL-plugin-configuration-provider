@@ -30,7 +30,12 @@ Mycroft.Delegate {
     fillWidth: true
     
     function selectSettingUpdated(key, value) {
-        triggerGuiEvent("ovos.configuration.provider.update.setting", {"setting_key": key, "setting_value": value, "skill_id": skill_id})
+        var configuration = {
+            "setting_key": key,
+            "setting_value": value,
+            "skill_id": settingsMetaGeneratorView.skill_id
+        }
+        triggerGuiEvent("ovos.configuration.provider.update.setting", {"configuration": configuration})
     }
     
     function generate_settings_ui(mData, comp) {
