@@ -24,9 +24,8 @@ import Mycroft 1.0 as Mycroft
 Mycroft.Delegate {
     id: settingsMetaGeneratorView
     anchors.fill: parent
-    property var skillID: sessionData.skill_id
-    property var pluginConfig: sessionData.settings_meta
-    property var pluginName: sessionData.plugin_name
+    property var skill_displaying_id: sessionData.skill_displaying_id
+    property var settingsMetaData: sessionData.settings_meta
     fillWidth: true
     
     function selectSettingUpdated(key, value) {
@@ -77,11 +76,12 @@ Mycroft.Delegate {
         return val_listing
     }
     
-    onPluginConfigChanged: {
+    onSettingsMetaDataChanged: {
         settingsMetaConfigView.update()
-        if(pluginConfig !== null){
-            settingsMetaConfigView.model = pluginConfig.sections
-            configPageHeading.text = pluginName + " Configuration"
+        if(settingsMetaData !== null){
+            settingsMetaConfigView.model = settingsMetaData.sections
+            var skillname = settingsMetaData.skill_id.split(".")[0]
+            configPageHeading.text = skillname + " Configuration"
         }
     }
     
@@ -252,7 +252,7 @@ Mycroft.Delegate {
         MouseArea {
             anchors.fill: parent
             onClicked: {
-                var back_event = skillID + ".settings.remove_page"
+                var back_event = skill_displaying_id + ".settings.remove_page"
                 triggerGuiEvent(skillevent, {})
             }
         }

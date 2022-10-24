@@ -273,44 +273,48 @@ class ConfigurationProviderPlugin(PHALPlugin):
 
 ### Everything below deals with plugin configurations
 
-    def handle_register_settings(self, message=None):
+    def handle_register_settings(self, message):
         settings_meta = message.data.get("settings_meta")
-        id = message.data.get("id")
-        # TODO: everything to do with registering settings
+        skill_id = message.data.get("skill_id")
+        self.registered_settings[skill_id] = {
+            "settings_meta": message.data.get("settings_meta"),
+            "skill_id";  skill_id
+        }
     
-    def handle_get_settings(self, message=None):
-        settings_meta = {} # TODO: Get settings meta from somewhere
-        self.bus.emit(Message.reply(message, {"settings_meta": settings_meta}))
-        # TODO: everything to do with getting settings
+    def handle_get_settings(self, message):
+        skill_id = message.data.get("skill_id")
+        self.bus.emit(message.response(self.registered_settings[skill_id]))
     
-    def display_settings_meta(self, message=None):
+    def display_settings_meta(self, message):
         """
         Display the settings meta data received from a request
         """
-        settings_meta = message.data.get("settings_meta")
-        plugin_name = message.data.get("plugin_name")
-        self.gui["plugin_name"] = plugin_name
-        self.gui["settings_meta"] = settings_meta
-        self.gui["skill_id"] self.name
+        skill_displaying_id = message.data.get("skill_displaying_id")
+        # Skill display id is used by the back button management on the page, if display is coming from phal it should be phal name
+        # if its another skill that should be displaying this page then it needs to be set by that skill
+        # skills will also need to register a gui event handler for "(display_id).settings.remove_page"
+        self.gui["skill_displaying_id"] = self.name
+        self.gui["settings_meta"] = message.data.get("settings_meta")
         qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
         self.gui.show_page(qml_file, override_idle=True)
-        
-    def handle_get_settings_ui(self, message=None):
+
+    def handle_get_settings_ui(self, message):
         """
         Forward the settings metaata generator page to skills that want to use it
         Skills that want to handle displaying the settings meta data generator page in their own GUI
         """
-        qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
-        self.bus.emit(Message("ovos.phal.configuration.provider.settings.qml.file", {"qml_file": qml_file}))
-        
-    def handle_settings_meta_generator_config_change(self, message=None):
+        skill_id = message.data.get("skill_id")
+        message.data = self.registered_settings[skill_id]
+        message.data["qml_file"] = qml_file
+        self.bus.emit(message.response(message.data))
+
+    def handle_settings_meta_generator_config_change(self, message):
         """
         Handle the settings meta data generator page config change
         This is the data page will pass back
         """
-        new_config = message.data.get("configuration")
-        # TODO: what to do with the new config that was changed in the gui
+        self.bus.emit("ovos.phal.configuration.provider.update.settings", {"configuration": message.data.get("configuration")}
 
-    def handle_remove_displayed_settings_meta(self, message=None):
+    def handle_remove_displayed_settings_meta(self, message):
         qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
         self.gui.remove_page(qml_file)
