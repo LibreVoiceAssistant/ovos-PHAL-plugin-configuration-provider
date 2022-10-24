@@ -316,6 +316,6 @@ class ConfigurationProviderPlugin(PHALPlugin):
         """
         self.bus.emit("ovos.phal.configuration.provider.update.settings", {"configuration": message.data.get("configuration")})
 
-    def handle_remove_displayed_settings_meta(self, message):
+    def handle_remove_displayed_page(self, message):
         qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
         self.gui.remove_page(qml_file)
