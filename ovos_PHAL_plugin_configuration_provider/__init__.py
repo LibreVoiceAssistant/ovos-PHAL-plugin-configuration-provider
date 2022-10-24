@@ -285,8 +285,8 @@ class ConfigurationProviderPlugin(PHALPlugin):
     def handle_get_settings(self, message):
         skill_id = message.data.get("skill_id")
         
-        if skill_id in self.registered_settings:
-            LOG.error(f"Getting settings for skill: {skill_id}")
+        if skill_id not in self.registered_settings:
+            LOG.error(f"{skill_id} did not register settings")
         else:
             self.bus.emit(message.response(self.registered_settings[skill_id]))
     
@@ -310,8 +310,8 @@ class ConfigurationProviderPlugin(PHALPlugin):
         """
         skill_id = message.data.get("skill_id")
 
-        if skill_id in self.registered_settings:
-            LOG.error(f"Getting settings for skill: {skill_id}")
+        if skill_id not in self.registered_settings:
+            LOG.error(f"{skill_id} did not register settings")
         else:
             message.data = self.registered_settings[skill_id]
             qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
