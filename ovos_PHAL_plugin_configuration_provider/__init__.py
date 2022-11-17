@@ -19,12 +19,14 @@ from mycroft_bus_client import Message
 from ovos_plugin_manager.phal import PHALPlugin
 from ovos_config.config import read_mycroft_config, update_mycroft_config
 from ovos_utils.log import LOG
-
+from ovos_utils.gui import GUIInterface
 
 class ConfigurationProviderPlugin(PHALPlugin):
     def __init__(self, bus=None, config=None):
         super().__init__(bus=bus, name="ovos-PHAL-plugin-configuration-provider", config=config)
         self.bus = bus
+        self.gui = GUIInterface(bus, self.name)
+        self.registered_settings = {}
         self.settings_meta = {}
         self.build_settings_meta()
         
@@ -34,6 +36,22 @@ class ConfigurationProviderPlugin(PHALPlugin):
                     self.get_settings_meta)
         self.bus.on("ovos.phal.configuration.provider.set",
                     self.set_settings_in_config)
+        
+        self.bus.on("ovos.phal.configuration.provider.register.settings",
+                    self.handle_register_settings)
+        self.bus.on("ovos.phal.configuration.provider.get.settings", 
+                    self.handle_get_settings)
+        self.bus.on("ovos.phal.configuration.provider.display.settings", 
+                    self.display_settings_meta)
+        self.bus.on("ovos.phal.configuration.provider.get.settings.qml",
+                    self.handle_get_settings_ui)
+
+        # GUI specific
+        self.gui.register_handler("ovos.configuration.provider.update.setting",
+                                  self.handle_settings_meta_generator_config_change)
+        self.gui.register_handler("ovos.configuration.provider.settings.remove_page",
+                                  self.handle_remove_displayed_page)
+
 
     def build_settings_meta(self):
         readable_config = read_mycroft_config()
@@ -253,3 +271,60 @@ class ConfigurationProviderPlugin(PHALPlugin):
                             subkey, configuration, new_config[key][subkey])
 
                         update_mycroft_config(new_config[key][subkey])
+
+### Everything below deals with plugin configurations
+
+    def handle_register_settings(self, message):
+        settings_meta = message.data.get("settings_meta")
+        skill_id = message.data.get("skill_id")
+        self.registered_settings[skill_id] = {
+            "settings_meta": message.data.get("settings_meta"),
+            "skill_id":  skill_id
+        }
+    
+    def handle_get_settings(self, message):
+        skill_id = message.data.get("skill_id")
+        
+        if skill_id not in self.registered_settings:
+            LOG.error(f"{skill_id} did not register settings")
+        else:
+            self.bus.emit(message.response(self.registered_settings[skill_id]))
+    
+    def display_settings_meta(self, message):
+        """
+        Display the settings meta data received from a request
+        """
+        self.gui["skill_displaying_id"] = self.name
+        self.gui["settings_meta"] = message.data.get("settings_meta")
+        qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
+        self.gui.show_page(qml_file, override_idle=True)
+
+    def handle_get_settings_ui(self, message):
+        """
+        Forward the settings metaata generator page to skills that want to use it
+        Skills that want to handle displaying the settings meta data generator page in their own GUI
+        
+        Requires the skill using this to provide the gui with the following:
+            skill_displaying_id: The skill id of the skill that is displaying the settings meta data generator page
+            for back button page functionality, example: self.gui["skill_displaying_id"] = self.skill_id
+        """
+        skill_id = message.data.get("skill_id")
+
+        if skill_id not in self.registered_settings:
+            LOG.error(f"{skill_id} did not register settings")
+        else:
+            message.data = self.registered_settings[skill_id]
+            qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
+            message.data["qml_file"] = qml_file
+            self.bus.emit(message.response(message.data))
+
+    def handle_settings_meta_generator_config_change(self, message):
+        """
+        Handle the settings meta data generator page config change
+        This is the data page will pass back
+        """
+        self.bus.emit("ovos.phal.configuration.provider.update.settings", {"configuration": message.data.get("configuration"), "skill_id": message.data.get("skill_id")})
+
+    def handle_remove_displayed_page(self, message):
+        qml_file = os.path.join(os.path.dirname(__file__), "ui", "SettingsMetaGenerator.qml")
+        self.gui.remove_page(qml_file)
