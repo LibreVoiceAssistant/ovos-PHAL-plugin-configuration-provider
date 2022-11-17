@@ -1,5 +1,9 @@
 # Changelog
 
+## [V1.0.0a3](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-configuration-provider/tree/V1.0.0a3) (2022-10-16)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-configuration-provider/compare/V1.0.0a2...V1.0.0a3)
+
 ## [V1.0.0a2](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-configuration-provider/tree/V1.0.0a2) (2022-08-10)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-PHAL-plugin-configuration-provider/compare/7a602e6ccadd3555e236459ffc542cfd79c9c54f...V1.0.0a2)
