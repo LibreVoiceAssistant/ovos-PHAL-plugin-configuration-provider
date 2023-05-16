@@ -1,4 +1,10 @@
-# OVOS PHAL CONFIGURATION PROVIDER
+# DEPRECATED - OVOS PHAL CONFIGURATION PROVIDER
+
+
+This repository is no longer maintained by OpenVoiceOS, use https://github.com/OpenVoiceOS/ovos-gui-plugin-shell-companion instead
+
+___________________________
+
 
 The Configuration Provider plugin provides an interface to generate GUI compatible configuration sections for mycroft advanced configuration
 
